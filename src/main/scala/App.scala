@@ -1,17 +1,25 @@
-import domain.person.{Person, PersonService}
+import domain.person.{InMemoryPersonStore, Person, PersonApplicationService, PersonService, PersonStore}
 import org.joda.time.DateTime
 
 object ScalavilleApp extends App{
 
-  var person: Person = Person(name = "nic", dateOfBirth = DateTime.now())
+  var people: List[Person] = List(
+    Person(name = "bill", dateOfBirth = DateTime.now()),
+    Person(name = "mary", dateOfBirth = DateTime.now()),
+    Person(name = "john", dateOfBirth = DateTime.now())
+  )
 
-  val personService: PersonService = new PersonService
+  val store = new InMemoryPersonStore()
+  val personApplicationService = new PersonApplicationService(store)
+  val personService = new PersonService()
 
-  println(s"person: $person")
 
-  while(!person.isDead){
-    person = personService.idle(person)
+  people.map{ personApplicationService.create }
+
+  while(!personApplicationService.list().head.isDead){
+    personApplicationService.list().map{ person =>
+      println(s"${person.name}: ${person.hunger}% hunger, ${person.restedness}% restedness")
+      val updatedPerson = personApplicationService.update(personService.idle(person)).get
+    }
   }
-
-  println(s"${person.name} died.")
 }
